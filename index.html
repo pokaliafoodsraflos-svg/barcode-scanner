@@ -11,7 +11,12 @@
     * {
       box-sizing: border-box;
     }
-
+.refresh-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: #198754;
+  color: white;
+}
     body {
       font-family: Arial, sans-serif;
       background: #f4f6f8;
@@ -173,23 +178,12 @@
 
     <button type="button" class="search-btn" onclick="searchByBarcode()">بحث بالباركود</button>
 
+    <button type="button" class="refresh-btn" onclick="refreshProducts()">تحديث المنتجات من الشيت</button>
+
     <div id="readerWrap">
       <div id="reader"></div>
       <button type="button" class="close-btn" onclick="closeScanner()">إغلاق الكاميرا</button>
     </div>
-
-    <div id="message" class="result"></div>
-
-    <div id="productCard" class="product-card">
-      <div id="productImageWrap" class="product-image-wrap">
-        <img id="productImage" class="product-image" src="" alt="صورة المنتج">
-      </div>
-
-      <div><strong>اسم الصنف:</strong> <span id="productName"></span></div>
-      <div><strong>السعر:</strong> <span id="productPrice"></span></div>
-      <div><strong>الرصيد:</strong> <span id="productStock"></span></div>
-    </div>
-  </div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbzpop2r7prj81Ug5u5o4bzywf0wL5jKHr30fzWNOGy4Ro6zbsk7kDfEOmPCP9wNM2P-iQ/exec";
@@ -197,6 +191,73 @@
   let scanner = null;
   let scannerRunning = false;
   let scanLocked = false;
+
+  let products = [];
+  let productsMap = {};
+
+  window.addEventListener("load", function () {
+    loadProductsFast();
+  });
+
+  async function loadProductsFast() {
+    showMessage("جاري تحميل المنتجات...", false, "hint");
+
+    try {
+      const cachedProducts = localStorage.getItem("products_cache");
+      const cachedTime = localStorage.getItem("products_cache_time");
+
+      const now = Date.now();
+      const cacheAge = cachedTime ? now - Number(cachedTime) : null;
+
+      // استخدم الكاش لو أقل من 5 دقائق
+      if (cachedProducts && cacheAge && cacheAge < 5 * 60 * 1000) {
+        products = JSON.parse(cachedProducts);
+        buildProductsMap();
+        showMessage("تم تحميل المنتجات بسرعة.", false);
+        return;
+      }
+
+      const response = await fetch(API_URL + "?action=getProducts");
+      const data = await response.json();
+
+      if (data.success && Array.isArray(data.products)) {
+        products = data.products;
+        buildProductsMap();
+
+        localStorage.setItem("products_cache", JSON.stringify(products));
+        localStorage.setItem("products_cache_time", String(now));
+
+        showMessage("تم تحميل المنتجات: " + products.length + " منتج.", false);
+      } else {
+        showMessage("لم يتم تحميل المنتجات من الشيت.", true);
+      }
+
+    } catch (err) {
+      console.log(err);
+
+      const cachedProducts = localStorage.getItem("products_cache");
+
+      if (cachedProducts) {
+        products = JSON.parse(cachedProducts);
+        buildProductsMap();
+        showMessage("تم استخدام نسخة محفوظة من المنتجات.", false, "hint");
+      } else {
+        showMessage("حدث خطأ أثناء تحميل المنتجات.", true);
+      }
+    }
+  }
+
+  function buildProductsMap() {
+    productsMap = {};
+
+    products.forEach(function(product) {
+      const barcode = String(product.barcode || "").trim();
+
+      if (barcode) {
+        productsMap[barcode] = product;
+      }
+    });
+  }
 
   async function openScanner() {
     const readerWrap = document.getElementById("readerWrap");
@@ -223,7 +284,7 @@
       await scanner.start(
         { facingMode: "environment" },
         {
-          fps: 10,
+          fps: 12,
           qrbox: {
             width: 280,
             height: 180
@@ -234,11 +295,13 @@
           if (scanLocked) return;
 
           scanLocked = true;
+
           document.getElementById("barcode").value = decodedText;
 
           showMessage("تم قراءة الباركود: " + decodedText, false);
 
           await closeScanner();
+
           searchByBarcode();
         },
         function(errorMessage) {
@@ -250,6 +313,7 @@
 
     } catch (err) {
       console.log(err);
+
       readerWrap.style.display = "none";
 
       const errorText = String(err && err.name ? err.name : err);
@@ -290,7 +354,7 @@
     readerWrap.style.display = "none";
   }
 
-  async function searchByBarcode() {
+  function searchByBarcode() {
     const barcode = document.getElementById("barcode").value.trim();
 
     hideProduct();
@@ -300,24 +364,20 @@
       return;
     }
 
-    showMessage("جاري البحث عن المنتج...", false, "hint");
+    const product = productsMap[barcode];
 
-    try {
-      const url = API_URL + "?action=getProduct&barcode=" + encodeURIComponent(barcode);
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (data.success && data.product) {
-        showProduct(data.product);
-        showMessage("تم العثور على المنتج.", false);
-      } else {
-        showMessage("الباركود غير موجود في الشيت: " + barcode, true);
-      }
-
-    } catch (err) {
-      console.log(err);
-      showMessage("حدث خطأ أثناء الاتصال بالشيت. تأكد من رابط Apps Script ومن صلاحيات النشر.", true);
+    if (product) {
+      showProduct(product);
+      showMessage("تم العثور على المنتج فورًا.", false);
+    } else {
+      showMessage("الباركود غير موجود في المنتجات: " + barcode, true);
     }
+  }
+
+  function refreshProducts() {
+    localStorage.removeItem("products_cache");
+    localStorage.removeItem("products_cache_time");
+    loadProductsFast();
   }
 
   function showProduct(product) {
@@ -355,7 +415,16 @@
     imageEl.src = "";
     imageWrap.style.display = "none";
   }
+function refreshProducts() {
+  hideProduct();
 
+  localStorage.removeItem("products_cache");
+  localStorage.removeItem("products_cache_time");
+
+  showMessage("جاري تحديث المنتجات من الشيت...", false, "hint");
+
+  loadProductsFast();
+}
   function showMessage(text, isError, type) {
     const msg = document.getElementById("message");
 
