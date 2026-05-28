@@ -180,10 +180,24 @@
 
     <button type="button" class="refresh-btn" onclick="refreshProducts()">تحديث المنتجات من الشيت</button>
 
-    <div id="readerWrap">
-      <div id="reader"></div>
-      <button type="button" class="close-btn" onclick="closeScanner()">إغلاق الكاميرا</button>
-    </div>
+  <div id="readerWrap">
+  <div id="reader"></div>
+  <button type="button" class="close-btn" onclick="closeScanner()">إغلاق الكاميرا</button>
+</div>
+
+<div id="message" class="result"></div>
+
+<div id="productCard" class="product-card">
+  <div id="productImageWrap" class="product-image-wrap">
+    <img id="productImage" class="product-image" src="" alt="صورة المنتج">
+  </div>
+
+  <div><strong>اسم الصنف:</strong> <span id="productName"></span></div>
+  <div><strong>السعر:</strong> <span id="productPrice"></span></div>
+  <div><strong>الرصيد:</strong> <span id="productStock"></span></div>
+</div>
+
+</div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbzpop2r7prj81Ug5u5o4bzywf0wL5jKHr30fzWNOGy4Ro6zbsk7kDfEOmPCP9wNM2P-iQ/exec";
