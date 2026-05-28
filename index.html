@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>Scanner</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -11,12 +12,7 @@
     * {
       box-sizing: border-box;
     }
-.refresh-btn {
-  width: 100%;
-  margin-top: 10px;
-  background: #198754;
-  color: white;
-}
+
     body {
       font-family: Arial, sans-serif;
       background: #f4f6f8;
@@ -86,6 +82,13 @@
       width: 100%;
       margin-top: 10px;
       background: #0b6bcb;
+      color: white;
+    }
+
+    .refresh-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: #198754;
       color: white;
     }
 
@@ -171,6 +174,7 @@
     <h2>📦 سكان باركود المنتج</h2>
 
     <label>الباركود</label>
+
     <div class="barcode-row">
       <input id="barcode" placeholder="اكتب أو اعمل سكان للباركود">
       <button type="button" class="camera-btn" onclick="openScanner()">📷</button>
@@ -180,24 +184,23 @@
 
     <button type="button" class="refresh-btn" onclick="refreshProducts()">تحديث المنتجات من الشيت</button>
 
-  <div id="readerWrap">
-  <div id="reader"></div>
-  <button type="button" class="close-btn" onclick="closeScanner()">إغلاق الكاميرا</button>
-</div>
+    <div id="readerWrap">
+      <div id="reader"></div>
+      <button type="button" class="close-btn" onclick="closeScanner()">إغلاق الكاميرا</button>
+    </div>
 
-<div id="message" class="result"></div>
+    <div id="message" class="result"></div>
 
-<div id="productCard" class="product-card">
-  <div id="productImageWrap" class="product-image-wrap">
-    <img id="productImage" class="product-image" src="" alt="صورة المنتج">
+    <div id="productCard" class="product-card">
+      <div id="productImageWrap" class="product-image-wrap">
+        <img id="productImage" class="product-image" src="" alt="صورة المنتج">
+      </div>
+
+      <div><strong>اسم الصنف:</strong> <span id="productName"></span></div>
+      <div><strong>السعر:</strong> <span id="productPrice"></span></div>
+      <div><strong>الرصيد:</strong> <span id="productStock"></span></div>
+    </div>
   </div>
-
-  <div><strong>اسم الصنف:</strong> <span id="productName"></span></div>
-  <div><strong>السعر:</strong> <span id="productPrice"></span></div>
-  <div><strong>الرصيد:</strong> <span id="productStock"></span></div>
-</div>
-
-</div>
 
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbzpop2r7prj81Ug5u5o4bzywf0wL5jKHr30fzWNOGy4Ro6zbsk7kDfEOmPCP9wNM2P-iQ/exec";
@@ -223,7 +226,6 @@
       const now = Date.now();
       const cacheAge = cachedTime ? now - Number(cachedTime) : null;
 
-      // استخدم الكاش لو أقل من 5 دقائق
       if (cachedProducts && cacheAge && cacheAge < 5 * 60 * 1000) {
         products = JSON.parse(cachedProducts);
         buildProductsMap();
@@ -319,6 +321,7 @@
           searchByBarcode();
         },
         function(errorMessage) {
+          // تجاهل أخطاء القراءة أثناء تحريك الكاميرا
         }
       );
 
@@ -388,465 +391,15 @@
     }
   }
 
-st();
-  }
+  function refreshProducts() {
+    hideProduct();
 
-  function showProduct(product) {
-    document.getElementById("productName").textContent = product.name || "";
-    document.getElementById("productPrice").textContent = product.price || "";
-    document.getElementById("productStock").textContent = product.stock || "";
+    localStorage.removeItem("products_cache");
+    localStorage.removeItem("products_cache_time");
 
-    const imageWrap = document.getElementById("productImageWrap");
-    const imageEl = document.getElementById("productImage");
+    showMessage("جاري تحديث المنتجات من الشيت...", false, "hint");
 
-    if (product.image) {
-      imageEl.src = product.image;
-      imageWrap.style.display = "block";
-
-      imageEl.onerror = function() {
-        imageWrap.style.display = "none";
-      };
-    } else {
-      imageEl.src = "";
-      imageWrap.style.display = "none";
-    }
-
-    document.getElementById("productCard").style.display = "block";
-  }
-
-  function hideProduct() {
-    document.getElementById("productCard").style.display = "none";
-    document.getElementById("productName").textContent = "";
-    document.getElementById("productPrice").textContent = "";
-    document.getElementById("productStock").textContent = "";
-
-    const imageWrap = document.getElementById("productImageWrap");
-    const imageEl = document.getElementById("productImage");
-
-    imageEl.src = "";
-    imageWrap.style.display = "none";
-  }
-function refreshProducts() {
-  hideProduct();
-
-  localStorage.removeItem("products_cache");
-  localStorage.removeItem("products_cache_time");
-
-  showMessage("جاري تحديث المنتجات من الشيت...", false, "hint");
-
-  loadProductsFast();
-}
-  function showMessage(text, isError, type) {
-    const msg = document.getElementById("message");
-
-    msg.textContent = text;
-    msg.style.display = "block";
-
-    msg.classList.remove("error");
-    msg.classList.remove("hint");
-
-    if (isError) {
-      msg.classList.add("error");
-    }
-
-    if (type === "hint") {
-      msg.classList.add("hint");
-    }
-  }
-</script>
-
-</body>
-</html><!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Scanner</title>
-
-  <script src="https://unpkg.com/html5-qrcode"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-.refresh-btn {
-  width: 100%;
-  margin-top: 10px;
-  background: #198754;
-  color: white;
-}
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 15px;
-      margin: 0;
-    }
-
-    .box {
-      background: #ffffff;
-      max-width: 520px;
-      margin: auto;
-      padding: 16px;
-      border-radius: 14px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.12);
-    }
-
-    h2 {
-      margin-top: 0;
-      font-size: 24px;
-      text-align: center;
-    }
-
-    label {
-      display: block;
-      margin-top: 14px;
-      margin-bottom: 6px;
-      font-weight: bold;
-    }
-
-    input,
-    select {
-      width: 100%;
-      padding: 13px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 9px;
-      background: white;
-    }
-
-    .barcode-row {
-      display: flex;
-      gap: 8px;
-      direction: ltr;
-    }
-
-    .barcode-row input {
-      flex: 1;
-      direction: rtl;
-    }
-
-    button {
-      border: none;
-      border-radius: 9px;
-      padding: 12px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .camera-btn {
-      width: 62px;
-      background: #111;
-      color: #fff;
-      font-size: 24px;
-    }
-
-    .search-btn {
-      width: 100%;
-      margin-top: 10px;
-      background: #0b6bcb;
-      color: white;
-    }
-
-    .close-btn {
-      width: 100%;
-      margin-top: 10px;
-      background: #b00020;
-      color: white;
-    }
-
-    #readerWrap {
-      display: none;
-      margin-top: 15px;
-      padding: 10px;
-      background: #111;
-      border-radius: 12px;
-    }
-
-    #reader {
-      width: 100%;
-      min-height: 320px;
-      overflow: hidden;
-      border-radius: 10px;
-      background: #000;
-    }
-
-    .result {
-      display: none;
-      margin-top: 15px;
-      padding: 12px;
-      border-radius: 9px;
-      background: #eaf7ea;
-      line-height: 1.7;
-      word-break: break-word;
-    }
-
-    .error {
-      background: #ffe5e5;
-      color: #900;
-    }
-
-    .hint {
-      background: #fff8d6;
-      color: #5c4700;
-    }
-
-    .product-card {
-      display: none;
-      margin-top: 15px;
-      padding: 14px;
-      border-radius: 12px;
-      background: #f1f8ff;
-      border: 1px solid #c9e3ff;
-      line-height: 1.8;
-    }
-
-    .product-card strong {
-      color: #0b4f8a;
-    }
-
-    .product-image-wrap {
-      display: none;
-      text-align: center;
-      margin-bottom: 12px;
-    }
-
-    .product-image {
-      max-width: 100%;
-      width: 220px;
-      height: 220px;
-      object-fit: contain;
-      border-radius: 12px;
-      background: #fff;
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-  </style>
-</head>
-
-<body>
-
-  <div class="box">
-    <h2>📦 سكان باركود المنتج</h2>
-
-    <label>الباركود</label>
-    <div class="barcode-row">
-      <input id="barcode" placeholder="اكتب أو اعمل سكان للباركود">
-      <button type="button" class="camera-btn" onclick="openScanner()">📷</button>
-    </div>
-
-    <button type="button" class="search-btn" onclick="searchByBarcode()">بحث بالباركود</button>
-
-    <button type="button" class="refresh-btn" onclick="refreshProducts()">تحديث المنتجات من الشيت</button>
-
-  <div id="readerWrap">
-  <div id="reader"></div>
-  <button type="button" class="close-btn" onclick="closeScanner()">إغلاق الكاميرا</button>
-</div>
-
-<div id="message" class="result"></div>
-
-<div id="productCard" class="product-card">
-  <div id="productImageWrap" class="product-image-wrap">
-    <img id="productImage" class="product-image" src="" alt="صورة المنتج">
-  </div>
-
-  <div><strong>اسم الصنف:</strong> <span id="productName"></span></div>
-  <div><strong>السعر:</strong> <span id="productPrice"></span></div>
-  <div><strong>الرصيد:</strong> <span id="productStock"></span></div>
-</div>
-
-</div>
-
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbzpop2r7prj81Ug5u5o4bzywf0wL5jKHr30fzWNOGy4Ro6zbsk7kDfEOmPCP9wNM2P-iQ/exec";
-
-  let scanner = null;
-  let scannerRunning = false;
-  let scanLocked = false;
-
-  let products = [];
-  let productsMap = {};
-
-  window.addEventListener("load", function () {
     loadProductsFast();
-  });
-
-  async function loadProductsFast() {
-    showMessage("جاري تحميل المنتجات...", false, "hint");
-
-    try {
-      const cachedProducts = localStorage.getItem("products_cache");
-      const cachedTime = localStorage.getItem("products_cache_time");
-
-      const now = Date.now();
-      const cacheAge = cachedTime ? now - Number(cachedTime) : null;
-
-      // استخدم الكاش لو أقل من 5 دقائق
-      if (cachedProducts && cacheAge && cacheAge < 5 * 60 * 1000) {
-        products = JSON.parse(cachedProducts);
-        buildProductsMap();
-        showMessage("تم تحميل المنتجات بسرعة.", false);
-        return;
-      }
-
-      const response = await fetch(API_URL + "?action=getProducts");
-      const data = await response.json();
-
-      if (data.success && Array.isArray(data.products)) {
-        products = data.products;
-        buildProductsMap();
-
-        localStorage.setItem("products_cache", JSON.stringify(products));
-        localStorage.setItem("products_cache_time", String(now));
-
-        showMessage("تم تحميل المنتجات: " + products.length + " منتج.", false);
-      } else {
-        showMessage("لم يتم تحميل المنتجات من الشيت.", true);
-      }
-
-    } catch (err) {
-      console.log(err);
-
-      const cachedProducts = localStorage.getItem("products_cache");
-
-      if (cachedProducts) {
-        products = JSON.parse(cachedProducts);
-        buildProductsMap();
-        showMessage("تم استخدام نسخة محفوظة من المنتجات.", false, "hint");
-      } else {
-        showMessage("حدث خطأ أثناء تحميل المنتجات.", true);
-      }
-    }
-  }
-
-  function buildProductsMap() {
-    productsMap = {};
-
-    products.forEach(function(product) {
-      const barcode = String(product.barcode || "").trim();
-
-      if (barcode) {
-        productsMap[barcode] = product;
-      }
-    });
-  }
-
-  async function openScanner() {
-    const readerWrap = document.getElementById("readerWrap");
-
-    try {
-      hideProduct();
-      scanLocked = false;
-      readerWrap.style.display = "block";
-
-      showMessage("جاري فتح الكاميرا...", false, "hint");
-
-      if (!window.Html5Qrcode) {
-        showMessage("مكتبة السكانر لم يتم تحميلها. اعمل تحديث للصفحة.", true);
-        return;
-      }
-
-      if (scannerRunning) {
-        await closeScanner();
-        readerWrap.style.display = "block";
-      }
-
-      scanner = new Html5Qrcode("reader");
-
-      await scanner.start(
-        { facingMode: "environment" },
-        {
-          fps: 12,
-          qrbox: {
-            width: 280,
-            height: 180
-          },
-          aspectRatio: 1.777
-        },
-        async function(decodedText) {
-          if (scanLocked) return;
-
-          scanLocked = true;
-
-          document.getElementById("barcode").value = decodedText;
-
-          showMessage("تم قراءة الباركود: " + decodedText, false);
-
-          await closeScanner();
-
-          searchByBarcode();
-        },
-        function(errorMessage) {
-        }
-      );
-
-      scannerRunning = true;
-      showMessage("الكاميرا اشتغلت. وجّهها ناحية الباركود.", false);
-
-    } catch (err) {
-      console.log(err);
-
-      readerWrap.style.display = "none";
-
-      const errorText = String(err && err.name ? err.name : err);
-
-      if (errorText.includes("NotAllowedError") || String(err).includes("Permission denied")) {
-        showMessage("صلاحية الكاميرا مرفوضة. افتح إعدادات المتصفح وخلي Camera Allow للموقع.", true);
-      } else if (errorText.includes("NotFoundError")) {
-        showMessage("لم يتم العثور على كاميرا في الجهاز.", true);
-      } else if (errorText.includes("NotReadableError")) {
-        showMessage("الكاميرا مشغولة في تطبيق آخر. اقفل أي تطبيق فاتح الكاميرا وجرب تاني.", true);
-      } else {
-        showMessage("حدث خطأ أثناء فتح الكاميرا: " + errorText, true);
-      }
-    }
-  }
-
-  async function closeScanner() {
-    const readerWrap = document.getElementById("readerWrap");
-
-    try {
-      if (scanner && scannerRunning) {
-        await scanner.stop();
-      }
-    } catch (err) {
-      console.log("stop error:", err);
-    }
-
-    try {
-      if (scanner) {
-        scanner.clear();
-      }
-    } catch (err) {
-      console.log("clear error:", err);
-    }
-
-    scannerRunning = false;
-    scanner = null;
-    readerWrap.style.display = "none";
-  }
-
-  function searchByBarcode() {
-    const barcode = document.getElementById("barcode").value.trim();
-
-    hideProduct();
-
-    if (!barcode) {
-      showMessage("اكتب الباركود أو اعمل سكان الأول.", true);
-      return;
-    }
-
-    const product = productsMap[barcode];
-
-    if (product) {
-      showProduct(product);
-      showMessage("تم العثور على المنتج فورًا.", false);
-    } else {
-      showMessage("الباركود غير موجود في المنتجات: " + barcode, true);
-    }
-  }
-
-st();
   }
 
   function showProduct(product) {
@@ -874,6 +427,7 @@ st();
 
   function hideProduct() {
     document.getElementById("productCard").style.display = "none";
+
     document.getElementById("productName").textContent = "";
     document.getElementById("productPrice").textContent = "";
     document.getElementById("productStock").textContent = "";
@@ -884,16 +438,7 @@ st();
     imageEl.src = "";
     imageWrap.style.display = "none";
   }
-function refreshProducts() {
-  hideProduct();
 
-  localStorage.removeItem("products_cache");
-  localStorage.removeItem("products_cache_time");
-
-  showMessage("جاري تحديث المنتجات من الشيت...", false, "hint");
-
-  loadProductsFast();
-}
   function showMessage(text, isError, type) {
     const msg = document.getElementById("message");
 
