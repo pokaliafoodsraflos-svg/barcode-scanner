@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
   <title>Scanner</title>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -141,6 +140,23 @@
     .product-card strong {
       color: #0b4f8a;
     }
+
+    .product-image-wrap {
+      display: none;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .product-image {
+      max-width: 100%;
+      width: 220px;
+      height: 220px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
   </style>
 </head>
 
@@ -165,6 +181,10 @@
     <div id="message" class="result"></div>
 
     <div id="productCard" class="product-card">
+      <div id="productImageWrap" class="product-image-wrap">
+        <img id="productImage" class="product-image" src="" alt="صورة المنتج">
+      </div>
+
       <div><strong>اسم الصنف:</strong> <span id="productName"></span></div>
       <div><strong>السعر:</strong> <span id="productPrice"></span></div>
       <div><strong>الرصيد:</strong> <span id="productStock"></span></div>
@@ -214,17 +234,14 @@
           if (scanLocked) return;
 
           scanLocked = true;
-
           document.getElementById("barcode").value = decodedText;
 
           showMessage("تم قراءة الباركود: " + decodedText, false);
 
           await closeScanner();
-
           searchByBarcode();
         },
         function(errorMessage) {
-          // تجاهل أخطاء القراءة أثناء تحريك الكاميرا
         }
       );
 
@@ -233,7 +250,6 @@
 
     } catch (err) {
       console.log(err);
-
       readerWrap.style.display = "none";
 
       const errorText = String(err && err.name ? err.name : err);
@@ -288,7 +304,6 @@
 
     try {
       const url = API_URL + "?action=getProduct&barcode=" + encodeURIComponent(barcode);
-
       const response = await fetch(url);
       const data = await response.json();
 
@@ -310,6 +325,21 @@
     document.getElementById("productPrice").textContent = product.price || "";
     document.getElementById("productStock").textContent = product.stock || "";
 
+    const imageWrap = document.getElementById("productImageWrap");
+    const imageEl = document.getElementById("productImage");
+
+    if (product.image) {
+      imageEl.src = product.image;
+      imageWrap.style.display = "block";
+
+      imageEl.onerror = function() {
+        imageWrap.style.display = "none";
+      };
+    } else {
+      imageEl.src = "";
+      imageWrap.style.display = "none";
+    }
+
     document.getElementById("productCard").style.display = "block";
   }
 
@@ -318,6 +348,12 @@
     document.getElementById("productName").textContent = "";
     document.getElementById("productPrice").textContent = "";
     document.getElementById("productStock").textContent = "";
+
+    const imageWrap = document.getElementById("productImageWrap");
+    const imageEl = document.getElementById("productImage");
+
+    imageEl.src = "";
+    imageWrap.style.display = "none";
   }
 
   function showMessage(text, isError, type) {
